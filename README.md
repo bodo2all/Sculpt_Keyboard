@@ -1,4 +1,4 @@
-# Sculpt_Keyboard
+# Microsoft Sculpt ESP32 Keyboard 
 A redesign of Microsoft Sculpt Keyboard electronics, with an ESP32S kit.
 
 I got the idea from:
