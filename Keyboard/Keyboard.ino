@@ -52,30 +52,27 @@ KEY_SCROLL_LOCK
 
 BleKEyboard doesn't match codes to any of these:
 https://cdn.sparkfun.com/datasheets/Wireless/Bluetooth/RN-HID-User-Guide-v1.0r.pdf
-https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
-
-Aparently the dev code implementation is
- /Users/<username>/Library/Arduino15/packages/esp32/hardware/esp32/2.0.9/tools/sdk/esp32/include/soc/esp32/include/soc/soc.h
+https://www.usb.org/sites/default/files/hut1_4.pdf
+exactly but the order does match so Caps is before F1, PrintScreen is after F12
+So right menu is KepadDot+2, Pause is Printscreen+2, ScrollLock is Printscreen+1
 */
-#define KEY_PAUSE    0x13
-#define KEY_NUM_LOCK 0xDB
+#define KEY_PAUSE       0xD0
 #define KEY_SCROLL_LOCK 0xCF
-#define KEY_RIGHT_MNU KEY_RIGHT_GUI
-
+#define KEY_APPLICATION 0xED
 
 // 0x00 0x00 is a placeholder for no key
 // all keys need to be 2 bytes cause print needs strings not chars, also calculator is two byte character
 // and I couln't use "b" notation cause the compiler didn't like the implicit conversion
 const RTC_RODATA_ATTR uint8_t layout[sizeof(rows)][sizeof(cols)][2] = {
 //       23,                      22,                     13,                  21,                       5,                     16,                    17,            19,               4,             15,                      2,              27
-/*34*/{{'9',            0x00}, {KEY_PAUSE,      0x00}, {KEY_DELETE,   0x00}, {'0',             0x00}, {'8',           0x00}, {KEY_BACKSPACE,  0x00}, {'7',    0x00}, {KEY_TAB, 0x00}, {'q',    0x00}, {'2',           0x00}, {'1',     0x00}, {0x00,           0x00}},
-/*12*/{{'-',            0x00}, {KEY_PAGE_UP,    0x00}, {KEY_F12,      0x00}, {'[',             0x00}, {']',           0x00}, {KEY_INSERT,     0x00}, {'y',    0x00}, {KEY_F5,  0x00}, {KEY_F3, 0x00}, {'w',           0x00}, {'4',     0x00}, {KEY_F6,         0x00}},
-/*18*/{{'o',            0x00}, {KEY_HOME,       0x00}, {0x00,         0x02}, {'p',             0x00}, {'i',           0x00}, {0x00,           0x00}, {'u',    0x00}, {'r',     0x00}, {'e',    0x00}, {KEY_CAPS_LOCK, 0x00}, {'3',     0x00}, {'t',            0x00}},
-/*14*/{{'l',            0x00}, {KEY_SCROLL_LOCK,0x00}, {KEY_RETURN,   0x00}, {';',             0x00}, {'k',           0x00}, {0x00,           0x00}, {'j',    0x00}, {'f',     0x00}, {'d',    0x00}, {'<',           0x00}, {'a',     0x00}, {KEY_LEFT_GUI,   0x00}},
-/*32*/{{'\'',           0x00}, {0x00,           0x00}, {KEY_RIGHT_MNU,0x00}, {'/',             0x00}, {KEY_RIGHT_ALT, 0x00}, {KEY_LEFT_ARROW, 0x00}, {'h',    0x00}, {'g',     0x00}, {KEY_F4, 0x00}, {'s',           0x00}, {KEY_ESC, 0x00}, {KEY_LEFT_ALT,   0x00}},
-/*33*/{{'.',            0x00}, {KEY_END,        0x00}, {KEY_PAGE_DOWN,0x00}, {'\\',            0x00}, {',',           0x00}, {KEY_RIGHT_SHIFT,0x00}, {'m',    0x00}, {'v',     0x00}, {'c',    0x00}, {'x',           0x00}, {'z',     0x00}, {KEY_LEFT_SHIFT, 0x00}},
-/*25*/{{KEY_RIGHT_CTRL, 0x00}, {KEY_RIGHT_ARROW,0x00}, {KEY_UP_ARROW, 0x00}, {KEY_DOWN_ARROW,  0x00}, {0x00,          0x00}, {' ',            0x00}, {'n',    0x00}, {'b',     0x00}, {' ',    0x00}, {0x00,          0x00}, {0x00,    0x00}, {KEY_LEFT_CTRL,  0x00}},
-/*26*/{{KEY_F9,         0x00}, {KEY_PRTSC,      0x00}, {KEY_F11,      0x00}, {'=',             0x00}, {KEY_F8,        0x00}, {KEY_F10,        0x00}, {KEY_F7, 0x00}, {'5',     0x00}, {KEY_F2, 0x00}, {KEY_F1,        0x00}, {'`',     0x00}, {'6',            0x00}}
+/*34*/{{'9',            0x00}, {KEY_PAUSE,      0x00}, {KEY_DELETE,     0x00}, {'0',             0x00}, {'8',           0x00}, {KEY_BACKSPACE,  0x00}, {'7',    0x00}, {KEY_TAB, 0x00}, {'q',    0x00}, {'2',           0x00}, {'1',     0x00}, {0x00,           0x00}},
+/*12*/{{'-',            0x00}, {KEY_PAGE_UP,    0x00}, {KEY_F12,        0x00}, {'[',             0x00}, {']',           0x00}, {KEY_INSERT,     0x00}, {'y',    0x00}, {KEY_F5,  0x00}, {KEY_F3, 0x00}, {'w',           0x00}, {'4',     0x00}, {KEY_F6,         0x00}},
+/*18*/{{'o',            0x00}, {KEY_HOME,       0x00}, {0x00,           0x02}, {'p',             0x00}, {'i',           0x00}, {0x00,           0x00}, {'u',    0x00}, {'r',     0x00}, {'e',    0x00}, {KEY_CAPS_LOCK, 0x00}, {'3',     0x00}, {'t',            0x00}},
+/*14*/{{'l',            0x00}, {KEY_SCROLL_LOCK,0x00}, {KEY_RETURN,     0x00}, {';',             0x00}, {'k',           0x00}, {0x00,           0x00}, {'j',    0x00}, {'f',     0x00}, {'d',    0x00}, {'<',           0x00}, {'a',     0x00}, {KEY_LEFT_GUI,   0x00}},
+/*32*/{{'\'',           0x00}, {0x00,           0x00}, {KEY_APPLICATION,0x00}, {'/',             0x00}, {KEY_RIGHT_ALT, 0x00}, {KEY_LEFT_ARROW, 0x00}, {'h',    0x00}, {'g',     0x00}, {KEY_F4, 0x00}, {'s',           0x00}, {KEY_ESC, 0x00}, {KEY_LEFT_ALT,   0x00}},
+/*33*/{{'.',            0x00}, {KEY_END,        0x00}, {KEY_PAGE_DOWN,  0x00}, {'\\',            0x00}, {',',           0x00}, {KEY_RIGHT_SHIFT,0x00}, {'m',    0x00}, {'v',     0x00}, {'c',    0x00}, {'x',           0x00}, {'z',     0x00}, {KEY_LEFT_SHIFT, 0x00}},
+/*25*/{{KEY_RIGHT_CTRL, 0x00}, {KEY_RIGHT_ARROW,0x00}, {KEY_UP_ARROW,   0x00}, {KEY_DOWN_ARROW,  0x00}, {0x00,          0x00}, {' ',            0x00}, {'n',    0x00}, {'b',     0x00}, {' ',    0x00}, {0x00,          0x00}, {0x00,    0x00}, {KEY_LEFT_CTRL,  0x00}},
+/*26*/{{KEY_F9,         0x00}, {KEY_PRTSC,      0x00}, {KEY_F11,        0x00}, {'=',             0x00}, {KEY_F8,        0x00}, {KEY_F10,        0x00}, {KEY_F7, 0x00}, {'5',     0x00}, {KEY_F2, 0x00}, {KEY_F1,        0x00}, {'`',     0x00}, {'6',            0x00}}
 };
 
 char RTC_DATA_ATTR mod_layout[2] = {'*',0x00}; //just a tmp buffer
