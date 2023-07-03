@@ -20,22 +20,31 @@
 #define WAKEUP_KEY_ROW 0 //3
 #define DEEP_SLEEP_TIMEOUT_MS (1*1000*60)
 
-
 #define FN_PIN      34
 #define LED_PIN     0
 #define BRD_HIST_SZ 5
+
+//#define DEBUG_PRINT
+
+#ifdef DEBUG_PRINT
+#define UART_PRINTF(...) Serial.printf(__VA_ARGS__)
+#define UART_PRINT(...) Serial.print(__VA_ARGS__)
+#else
+#define UART_PRINTF(...) 
+#define UART_PRINT(...)  
+#endif
 
 // note gpio 18 for row3 doesn't support rtc wake
 BleKeyboard bleKeyboard("Sculpt ESP32", "Microsoft", 100);
 const RTC_RODATA_ATTR uint8_t cols[]={       23,   22,    13,   21,     5,    16,    17,  19,   4,   15,  2,  27    };
 const RTC_RODATA_ATTR uint8_t rows[]={34, /* 9     paus   del   0       8     Bspc   7    tab  Q    2    1         */
-                      12, /* mins  pgup   F12  lbrc     rbrc  ins    Y    F5   F3   W    4    F6   */
-                      18, /* O     home   calc  P       I            U    R    E    caps 3    T    */
-                      14, /* L     slck   ent   scln    K     bsls   J    F    D    <    A    lgui */
-                      32, /* quot         app   slsh    ralt  left   H    G    F4   S    esc  lalt */
-                      33, /* dot   end    pgdn          comm  rshift M    V    C    X    Z    lsft */
-                      25, /* rctl  right  up    down          rspc   N    B    lspc           lctl */
-                      26};/* F9    pscr   F11   eql     F8    F10    F7   5    F2   F1   grv`  6    */
+                                      12, /* mins  pgup   F12  lbrc     rbrc  ins    Y    F5   F3   W    4    F6   */
+                                      18, /* O     home   calc  P       I            U    R    E    caps 3    T    */
+                                      14, /* L     slck   ent   scln    K     bsls   J    F    D    <    A    lgui */
+                                      32, /* quot         app   slsh    ralt  left   H    G    F4   S    esc  lalt */
+                                      33, /* dot   end    pgdn          comm  rshift M    V    C    X    Z    lsft */
+                                      25, /* rctl  right  up    down          rspc   N    B    lspc           lctl */
+                                      26};/* F9    pscr   F11   eql     F8    F10    F7   5    F2   F1   grv`  6   */
 /*
 TBD - might not the right ones:
 KEY_PAUSE
@@ -80,6 +89,9 @@ RTC_DATA_ATTR uint8_t led_state;
 
 uint8_t fn_state;
 uint8_t modifier;
+uint32_t timeout_cnt_ms;
+uint64_t prev_millis;
+
 
 #ifdef RAW_TABLE_DEBUG
 unsigned display_period=0;
@@ -191,9 +203,12 @@ void scan_board() {
       c = layout[j][i][0];
       c1= layout[j][i][1];
       if(key_press(i,j) && (c || c1)) {//valid key press
-        Serial.printf("/%02d.%02d: 0x%02X \'%c\'", cols[i], rows[j], c, c);
+        UART_PRINTF("/%02d.%02d: 0x%02X \'%c\'", cols[i], rows[j], c, c);
+        timeout_cnt_ms = 0; //reset timeout while active
+        if(connected[0]==0)
+          return;
         if(isspace(c) || isprint(c)) {
-          Serial.print("<printable>");
+          UART_PRINT("<printable>");
           mod_layout[0] = c;
           if(modifier) {
             switch (c) {
@@ -211,29 +226,32 @@ void scan_board() {
           bleKeyboard.print((const char *)mod_layout);
           //bleKeyboard.press(mod_layout[0]);
         } else if(isModifier(c)) {
-          Serial.print("<modifier>");
+          UART_PRINT("<modifier>");
           if ((c==KEY_RIGHT_SHIFT) || (c==KEY_LEFT_SHIFT)) {
             modifier = 1;//some characters just aren't issued correctly with shift.
           } else if (c==KEY_CAPS_LOCK) {
             led_state++;
             led_state %= 2;
-            Serial.printf("%c", led_state?'*':'.');
+            UART_PRINTF("%c", led_state?'*':'.');
             digitalWrite(LED_PIN, led_state);
           }
           bleKeyboard.press(c);
         } else { // multimedia keys, enter esc, f keys
           if(layout[j][i][1]==0) {// escape,tab, backspace are one byte
-            Serial.print("<special_key>");
+            UART_PRINT("<special_key>");
             bleKeyboard.write(layout[j][i][0]);
             //bleKeyboard.press(c);
           } else { //multimedia keys are 2 bytes
-            Serial.print("<media_key>");
+            UART_PRINT("<media_key>");
             bleKeyboard.write(layout[j][i]);
           }
         }
-        Serial.print("\n");
+        UART_PRINT("\n");
       } else if(key_release(i,j) && (c || c1)) {
-        Serial.printf("\\%02d.%02d: 0x%02X \'%c\'\n", cols[i], rows[j], c, c);
+        UART_PRINTF("\\%02d.%02d: 0x%02X \'%c\'\n", cols[i], rows[j], c, c);
+        timeout_cnt_ms = 0; //reset timeout while active
+        if(connected[0]==0)
+          return;
         bleKeyboard.release(c);
         if ((c==KEY_RIGHT_SHIFT) || (c==KEY_LEFT_SHIFT)) {
           modifier = 0;//some characters just aren't issued correctly with shift.
@@ -249,22 +267,17 @@ void scan_board() {
 void print_board() {
   for (uint8_t j=0; j<sizeof(rows); j++) {
     for (uint8_t i=0; i<sizeof(cols); i++) {
-      Serial.printf("%c ",key_press(i,j)?'*':'.');
+      UART_PRINTF("%c ",key_press(i,j)?'*':'.');
     }
     if(j==0) {
-      Serial.printf("|%c\n",fn_state?'*':'.');
+      UART_PRINTF("|%c\n",fn_state?'*':'.');
     } else {
-      Serial.printf("|\n");
+      UART_PRINTF("|\n");
     }
   }
-  Serial.printf("___________________________\n");
+  UART_PRINTF("___________________________\n");
 }
 #endif
-
-
-uint32_t timeout_cnt_ms;
-uint64_t prev_millis;
-
 
 
 
@@ -282,6 +295,7 @@ void periodic_sleep_check() {
   if(timeout_cnt_ms > DEEP_SLEEP_TIMEOUT_MS) {
     //trigger deep sleep
     bleKeyboard.releaseAll();
+    led_state = 0;
 
     //wake-up on a gpio (possible gpios 0,2,4,12-15,25-27,32-39)
     pinMode(rows[WAKEUP_KEY_ROW], INPUT_PULLDOWN);
@@ -297,6 +311,7 @@ void periodic_sleep_check() {
       }
       gpio_hold_en((gpio_num_t)cols[i]);
     }
+    digitalWrite((gpio_num_t)LED_PIN, led_state);
     gpio_hold_en((gpio_num_t)LED_PIN);
     gpio_deep_sleep_hold_en();
 
@@ -309,9 +324,10 @@ void periodic_sleep_check() {
 
 void setup() {
   int i,j,k;
-
+#ifdef DEBUG_PRINT
   Serial.begin(115200);
-  Serial.printf("********** Chip Rev:%d ************\n", ESP.getChipRevision());
+  UART_PRINTF("********** Chip Rev:%d ************\n", ESP.getChipRevision());
+#endif
 
 #ifndef RAW_TABLE_DEBUG
   bleKeyboard.begin();
@@ -332,7 +348,6 @@ void setup() {
     gpio_hold_dis((gpio_num_t)rows[i]);
     pinMode(rows[i], INPUT_PULLDOWN);
   }
-  Serial.println(msg1);
 
   fn_state=0;
   led_state=0;
@@ -361,8 +376,6 @@ int ret;
       esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT,ESP_PWR_LVL_N12); //lower tx power -12db
       esp_bt_sleep_enable(); //allow oportunistic radio sleep
     }
-    scan_board(); // read keys, send keys on ble
-    periodic_sleep_check();//updates counters, timeout to deep_sleep
     delay( SCN_DELAY_MS );
     //esp_delay( 500 );
   } else {
@@ -372,11 +385,13 @@ int ret;
         esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P4); //lower tx power -12db
         esp_bt_sleep_disable(); //allow oportunistic radio sleep
       }
-      Serial.print(".");
+      UART_PRINTF(".");
       led_state &=1;
       digitalWrite(LED_PIN, led_state++);
       delay( ADVERTISE_DELAY_MS );
   }
+  scan_board(); // read keys, send keys on ble
+  periodic_sleep_check();//updates counters, timeout to deep_sleep
   connected[1] = connected[0];
 #else //don't bother with bluetooth, just print the raw buttons on serial
   scan_board();
